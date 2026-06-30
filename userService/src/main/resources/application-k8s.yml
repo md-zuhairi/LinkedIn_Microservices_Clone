@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_SERVER}:5432/${DB_NAME}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  kafka:
+    bootstrap-servers: kafka:9092
+
+USER_SERVICE_URI: http://user-service
+POSTS_SERVICE_URI: http://posts-service
+CONNECTIONS_SERVICE_URI: http://connections-service
+NOTIFICATIONS_SERVICE_URI: http://notification-service
+
+
+eureka.client:
+  register-with-eureka: false
+  fetch-registry: false

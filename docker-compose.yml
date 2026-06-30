@@ -1,0 +1,217 @@
+version: '3.8'
+
+services:
+  # ============= DATABASES =============
+
+  connections-db:
+    image: neo4j:4.4.39-community
+    container_name: connections-db
+    ports:
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: neo4j/password@1234
+      NEO4J_dbms_memory_heap_initial__size: 512M
+      NEO4J_dbms_memory_heap_max__size: 2G
+      NEO4J_dbms_default__listen__address: 0.0.0.0
+      NEO4J_ACCEPT_LICENSE_AGREEMENT: "yes"
+    volumes:
+      - connections-db-data:/data
+      - connections-db-logs:/logs
+    networks:
+      - linkedin-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:7474"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  notification-db:
+    image: postgres:16
+    container_name: notification-db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: notificationDB
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - notification-db-data:/var/lib/postgresql/data
+    networks:
+      - linkedin-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  posts-db:
+    image: postgres:16
+    container_name: posts-db
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: postsDB
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - posts-db-data:/var/lib/postgresql/data
+    networks:
+      - linkedin-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  user-db:
+    image: postgres:16
+    container_name: user-db
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: userDB
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+    networks:
+      - linkedin-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============= MESSAGE BROKER =============
+
+  kafka:
+    image: confluentinc/confluent-local:7.5.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "29093:29093"
+    environment:
+      CLUSTER_ID: 6PMpHYL9QkeyXRj9Nrp4KA
+      KAFKA_NODE_ID: 1
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093
+      KAFKA_PROCESS_ROLES: broker,controller
+    networks:
+      - linkedin-network
+
+  # ============= SPRING SERVICES =============
+
+  # Note: These use images from Docker Hub. If they don't exist locally, 
+  # you'll need to either:
+  # 1. Build them locally: cd <service-dir> && docker build -t <image-name> .
+  # 2. Or comment them out and build separately
+
+  connections-service:
+    image: mzuhai/linkedin-app-connections-service:latest
+    container_name: connections-service
+    ports:
+      - "9030:9030"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      KAFKA_LOG4J_ROOT_LOGLEVEL: "ERROR"
+    depends_on:
+      - connections-db
+      - kafka
+    networks:
+      - linkedin-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9030/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  notification-service:
+    image: mzuhai/linkedin-app-notification-service:latest
+    container_name: notification-service
+    ports:
+      - "9040:9040"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - notification-db
+      - kafka
+    networks:
+      - linkedin-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9040/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  posts-service:
+    image: mzuhai/linkedin-app-posts-service:latest
+    container_name: posts-service
+    ports:
+      - "9010:9010"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - posts-db
+      - kafka
+    networks:
+      - linkedin-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9010/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  uploader-service:
+    image: mzuhai/linkedin-app-uploader-service:latest
+    container_name: uploader-service
+    ports:
+      - "9050:9050"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - kafka
+    networks:
+      - linkedin-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9050/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  user-service:
+    image: mzuhai/linkedin-app-user-service:latest
+    container_name: user-service
+    ports:
+      - "9020:9020"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - user-db
+      - kafka
+    networks:
+      - linkedin-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9020/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# ============= VOLUMES =============
+
+volumes:
+  connections-db-data:
+  connections-db-logs:
+  notification-db-data:
+  posts-db-data:
+  user-db-data:
+
+# ============= NETWORKS =============
+
+networks:
+  linkedin-network:
+    driver: bridge

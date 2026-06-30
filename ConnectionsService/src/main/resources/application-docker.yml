@@ -1,0 +1,14 @@
+spring:
+  neo4j:
+    uri: neo4j://connections-db:7687
+    authentication:
+      username: neo4j
+      password: password@1234
+
+  kafka:
+    bootstrap-servers: kafka:9092
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false

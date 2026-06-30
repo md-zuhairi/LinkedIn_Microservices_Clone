@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://notification-db:5432/notificationDB
+    username: postgres
+    password: admin
+  kafka:
+    bootstrap-servers: kafka:9092
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false

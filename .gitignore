@@ -1,0 +1,20 @@
+# Java/Maven/Gradle
+target/
+build/
+*.class
+.mvn/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+
+# Local-only files
+*.env
+application-local.yml
+*-secret.yml
+cloudinary-secret.yml
+*.log

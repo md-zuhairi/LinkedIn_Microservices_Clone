@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://posts-db:5432/postsDB
+    username: postgres
+    password: admin
+  kafka:
+    bootstrap-servers: kafka:9092
+
+USER_SERVICE_URI: http://user-service:9020
+POSTS_SERVICE_URI: http://posts-service:9010
+CONNECTIONS_SERVICE_URI: http://connections-service:9030
+NOTIFICATIONS_SERVICE_URI: http://notification-service:9040
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
