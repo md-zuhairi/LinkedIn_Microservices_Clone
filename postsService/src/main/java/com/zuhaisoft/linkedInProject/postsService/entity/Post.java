@@ -12,6 +12,8 @@ import java.time.LocalDateTime;
 @Setter
 public class Post {
 
+    /*In Git Edited Test*/
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
